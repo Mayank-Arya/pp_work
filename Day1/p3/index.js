@@ -14,7 +14,7 @@ app.get('/', (req,res) => {
 })
 
 
-app.listen(9090, async(req,res) => {
+app.listen(9090, async() => {
     try{
         await connection
         console.log('Connected to Database successfully!!')
@@ -24,3 +24,5 @@ app.listen(9090, async(req,res) => {
         console.log(err.message)
     }
 })
+
+
