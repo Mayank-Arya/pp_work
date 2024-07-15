@@ -1,6 +1,9 @@
 const express = require('express')
 const router = express.Router()
 const userModel = require('./model.js')
+const jwt = require('jsonwebtoken')
+const bcrypt = require('bcrypt')
+
 
 
 router.get('/', (req,res) => {
@@ -15,19 +18,40 @@ router.get('/', (req,res) => {
 
 
 
-router.post('/adduser', async(req,res) =>{
+router.post('/signup', async(req,res) =>{
     try{
-      const {name, age, email} = req.body;
+      const {name, age, email, password} = req.body;
       const ifUserExist = await findOne({email})
       if(ifUserExist){
        return res.send("User exist already!")
       }
-      const newUser = new userModel({name, age, email})
+
+      const hashedPass = await bcrypt.hash(password, 8)
+      const newUser = new userModel({name, age, email, password: hashedPass})
       await newUser.save()
       res.status(200).send('New User added successfully!!')
     }
     catch(err){
         console.log(err.message)
+    }
+})
+
+
+router.post('/login', async(req,res) => {
+    try{
+     const {email, password} = req.body;
+     const user = await userModel.findOne({email})
+
+     if(!user || !(await bcrypt.compare(password, user.password))){
+        res.status(400).send('Invalid email or password')
+     }
+
+     const token = jwt.sign({id: user._id}, process.env.JWT_SECRET, {expiresIn: '1h'})
+     res.status(500).send(user, token)
+    }
+    catch(err){
+        console.log(err)
+        res.status(500).send(err.message)
     }
 })
 
